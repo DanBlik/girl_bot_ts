@@ -11,7 +11,6 @@ const OPENROUTER_API_MODEL_NAME = process.env.OPENROUTER_API_MODEL_NAME
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 const HF_TOKEN = process.env.HF_API_KEY
-const client = new InferenceClient(HF_TOKEN)
 
 export async function generateAtmosphericImage(
   prompt: string
@@ -22,29 +21,44 @@ export async function generateAtmosphericImage(
   }
 
   try {
-    // Используем SD3-Medium — лучшая модель для эстетики
-    const image = await client.textToImage({
-      provider: 'auto', // автоматически выберет оптимальный провайдер
-      model: 'stabilityai/stable-diffusion-3-medium',
-      inputs: prompt,
-      parameters: {
-        num_inference_steps: 40, // качество: выше — лучше, но медленнее
-        guidance_scale: 7.5, // баланс между креативностью и точностью
-        negative_prompt:
-          'nudity, explicit, bare skin, cleavage, sexual content, text, watermark, logo, cartoon, anime, deformed, low quality, blurry, bad anatomy',
-        width: 1024,
-        height: 1024,
-        seed: Math.floor(Math.random() * 1000000), // чтобы каждый раз было немного по-разному
-      },
-    })
+    const response = await fetch(
+      'https://router.huggingface.co/fal-ai/fal-ai/stable-diffusion-v3-medium',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${HF_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sync_mode: true,
+          prompt: prompt,
+          num_inference_steps: 40,
+          guidance_scale: 7.5,
+          negative_prompt:
+            'nudity, explicit, bare skin, cleavage, sexual content, text, watermark, logo, cartoon, anime, deformed, low quality, blurry, bad anatomy',
+          width: 1024,
+          height: 1024,
+          seed: Math.floor(Math.random() * 1000000),
+        }),
+      }
+    )
 
-    // Преобразуем ArrayBuffer в base64
-    const buffer = Buffer.from(image)
+    // Проверяем статус
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('🔴 FAL Router вернул ошибку:', response.status, errorText)
+      return ''
+    }
+
+    // 🚨 КЛЮЧЕВОЙ ШАГ: Получаем ArrayBuffer — а не Blob!
+    const arrayBuffer = await response.arrayBuffer() // ← РАБОТАЕТ В NODE.JS!
+    const buffer = Buffer.from(arrayBuffer)
+
+    // Преобразуем в base64 для Telegram
     const base64Image = buffer.toString('base64')
-
     return `image/jpeg;base64,${base64Image}`
   } catch (error: any) {
-    console.error('🔴 Ошибка генерации фото через SD3-Medium:', error.message)
+    console.error('🔴 Ошибка генерации фото через FAL Router:', error.message)
     return ''
   }
 }
