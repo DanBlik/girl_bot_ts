@@ -5,26 +5,30 @@ interface Message {
   content: string
 }
 
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
-const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 export async function getAIResponse(messages: Message[]): Promise<string> {
-  if (!DEEPSEEK_API_KEY) {
-    throw new Error('DEEPSEEK_API_KEY не установлен!')
+  if (!OPENROUTER_API_KEY) {
+    throw new Error('OPENROUTER_API_KEY не установлен!')
   }
 
   try {
     const response = await axios.post(
-      DEEPSEEK_URL,
+      OPENROUTER_URL,
       {
-        model: 'deepseek-chat',
+        //
+        // model: 'deepseek-ai/deepseek-chat', // ← ВАЖНО: именно так пишется имя модели!
+        model: 'deepseek/deepseek-chat-v3.1:free',
         messages,
         temperature: 0.8,
         max_tokens: 500,
       },
       {
         headers: {
-          Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          'HTTP-Referer': 'https://your-bot-name.onrender.com', // обязательно, даже если просто тест
+          'X-Title': 'GirlFriendBot',
           'Content-Type': 'application/json',
         },
       }
@@ -32,7 +36,7 @@ export async function getAIResponse(messages: Message[]): Promise<string> {
 
     return response.data.choices[0].message.content || '...'
   } catch (error: any) {
-    console.error('DeepSeek API error:', error.response?.data || error.message)
-    return 'Извини, я сейчас немного засомневалась... 🤔'
+    console.error('OpenRouter error:', error.response?.data || error.message)
+    return 'Извини, я чуть не потерялась... 🌫️ Попробуй ещё раз?'
   }
 }
