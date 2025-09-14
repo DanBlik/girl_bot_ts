@@ -27,7 +27,7 @@ export async function getAIResponse(messages: Message[]): Promise<string> {
       {
         headers: {
           Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          'HTTP-Referer': 'https://your-bot-name.onrender.com', // обязательно, даже если просто тест
+          'HTTP-Referer': 'girlbotts-production.up.railway.app', // обязательно, даже если просто тест
           'X-Title': 'GirlFriendBot',
           'Content-Type': 'application/json',
         },
