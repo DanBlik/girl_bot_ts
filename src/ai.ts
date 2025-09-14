@@ -29,7 +29,7 @@ export async function generateAtmosphericImage(
     console.log('📡 Отправка запроса на FAL Router...')
 
     const response = await fetch(
-      'https://router.huggingface.co/fal-ai/fal-ai/hunyuan-image/v2.1/text-to-image',
+      'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0',
       {
         method: 'POST',
         headers: {
