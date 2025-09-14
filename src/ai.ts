@@ -23,8 +23,8 @@ export async function getAIResponse(messages: Message[]): Promise<string> {
         // model: 'deepseek/deepseek-chat-v3.1:free', // ← ВАЖНО: именно так пишется имя модели!
         model: OPENROUTER_API_MODEL_NAME, // ← ВАЖНО: именно так пишется имя модели!
         messages,
-        temperature: 0.8,
-        max_tokens: 500,
+        temperature: 0.9,
+        max_tokens: 160,
       },
       {
         headers: {
