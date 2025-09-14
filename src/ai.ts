@@ -11,7 +11,7 @@ const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 const HF_API_KEY = process.env.HF_API_KEY
 const HF_URL =
-  'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3-medium'
+  'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5'
 
 export async function generateAtmosphericImage(
   prompt: string
