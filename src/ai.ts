@@ -6,6 +6,7 @@ interface Message {
 }
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
+const OPENROUTER_API_MODEL_NAME = process.env.OPENROUTER_API_MODEL_NAME
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 export async function getAIResponse(messages: Message[]): Promise<string> {
@@ -19,7 +20,8 @@ export async function getAIResponse(messages: Message[]): Promise<string> {
     const response = await axios.post(
       OPENROUTER_URL,
       {
-        model: 'deepseek/deepseek-chat-v3.1:free', // ← ВАЖНО: именно так пишется имя модели!
+        // model: 'deepseek/deepseek-chat-v3.1:free', // ← ВАЖНО: именно так пишется имя модели!
+        model: OPENROUTER_API_MODEL_NAME, // ← ВАЖНО: именно так пишется имя модели!
         messages,
         temperature: 0.8,
         max_tokens: 500,
