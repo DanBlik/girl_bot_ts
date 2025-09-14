@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { InferenceClient } from '@huggingface/inference'
 
 interface Message {
   role: 'system' | 'user' | 'assistant'
@@ -9,40 +10,41 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
 const OPENROUTER_API_MODEL_NAME = process.env.OPENROUTER_API_MODEL_NAME
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
-const HF_API_KEY = process.env.HF_API_KEY
-const HF_URL =
-  'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3-medium'
+const HF_TOKEN = process.env.HF_API_KEY
+const client = new InferenceClient(HF_TOKEN)
 
 export async function generateAtmosphericImage(
   prompt: string
 ): Promise<string> {
-  if (!HF_API_KEY) {
-    console.error('❌ HF_API_KEY не установлен!')
+  if (!HF_TOKEN) {
+    console.error('❌ HF_TOKEN не установлен!')
     return ''
   }
 
   try {
-    const response = await axios.post(
-      HF_URL,
-      { inputs: prompt },
-      {
-        headers: {
-          Authorization: `Bearer ${HF_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        responseType: 'arraybuffer',
-        timeout: 15000,
-      }
-    )
+    // Используем SD3-Medium — лучшая модель для эстетики
+    const image = await client.textToImage({
+      provider: 'auto', // автоматически выберет оптимальный провайдер
+      model: 'stabilityai/stable-diffusion-3-medium',
+      inputs: prompt,
+      parameters: {
+        num_inference_steps: 40, // качество: выше — лучше, но медленнее
+        guidance_scale: 7.5, // баланс между креативностью и точностью
+        negative_prompt:
+          'nudity, explicit, bare skin, cleavage, sexual content, text, watermark, logo, cartoon, anime, deformed, low quality, blurry, bad anatomy',
+        width: 1024,
+        height: 1024,
+        seed: Math.floor(Math.random() * 1000000), // чтобы каждый раз было немного по-разному
+      },
+    })
 
-    // Преобразуем в base64 для Telegram
-    const imageBase64 = Buffer.from(response.data).toString('base64')
-    return `data:image/jpeg;base64,${imageBase64}`
+    // Преобразуем ArrayBuffer в base64
+    const buffer = Buffer.from(image)
+    const base64Image = buffer.toString('base64')
+
+    return `image/jpeg;base64,${base64Image}`
   } catch (error: any) {
-    console.error(
-      '🔴 Ошибка генерации фото:',
-      error.response?.data || error.message
-    )
+    console.error('🔴 Ошибка генерации фото через SD3-Medium:', error.message)
     return ''
   }
 }
