@@ -13,6 +13,8 @@ export async function getAIResponse(messages: Message[]): Promise<string> {
     throw new Error('OPENROUTER_API_KEY не установлен!')
   }
 
+  let lastError: any
+
   try {
     const response = await axios.post(
       OPENROUTER_URL,
@@ -49,7 +51,22 @@ export async function getAIResponse(messages: Message[]): Promise<string> {
 
     return reply
   } catch (error: any) {
-    console.error('OpenRouter error:', error.response?.data || error.message)
-    return 'Извини, я чуть не потерялась... 🌫️ Попробуй ещё раз?'
+    lastError = error
+
+    // Если 401 — ключ неверный
+    if (error.response?.status === 401) {
+      console.error(
+        '🛑 Неверный API ключ! Проверь OPENROUTER_API_KEY в Railway.'
+      )
+      return 'Неверный API ключ! Проверь OPENROUTER_API_KEY в Railway.'
+    }
+
+    // Если 404 — модель не найдена
+    if (error.response?.status === 404) {
+      console.error('🔍 Модель не найдена. Проверь имя: в Referer')
+      return '🔍 Модель не найдена. Проверь имя: в Referer'
+    }
+
+    return 'Ой... я чуть не потерялась 🌫️ Давай ещё раз?'
   }
 }
