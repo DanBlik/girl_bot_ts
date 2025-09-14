@@ -15,12 +15,19 @@ const HF_TOKEN = process.env.HF_API_KEY
 export async function generateAtmosphericImage(
   prompt: string
 ): Promise<string> {
+  console.log('🔍 Генерация фото запущена...')
+  console.log('📝 Промпт:', prompt)
+
   if (!HF_TOKEN) {
     console.error('❌ HF_TOKEN не установлен!')
     return ''
   }
 
+  console.log('✅ HF_TOKEN найден')
+
   try {
+    console.log('📡 Отправка запроса на FAL Router...')
+
     const response = await fetch(
       'https://router.huggingface.co/fal-ai/fal-ai/stable-diffusion-v3-medium',
       {
@@ -43,22 +50,34 @@ export async function generateAtmosphericImage(
       }
     )
 
-    // Проверяем статус
+    console.log('📡 Получен ответ:', response.status, response.statusText)
+
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('🔴 FAL Router вернул ошибку:', response.status, errorText)
+      console.error('🔴 Ошибка от FAL Router:', response.status, errorText)
       return ''
     }
 
-    // 🚨 КЛЮЧЕВОЙ ШАГ: Получаем ArrayBuffer — а не Blob!
-    const arrayBuffer = await response.arrayBuffer() // ← РАБОТАЕТ В NODE.JS!
-    const buffer = Buffer.from(arrayBuffer)
+    console.log('📥 Получаем данные как ArrayBuffer...')
+    const arrayBuffer = await response.arrayBuffer()
+    console.log(
+      '✅ ArrayBuffer получен, размер:',
+      arrayBuffer.byteLength,
+      'байт'
+    )
 
-    // Преобразуем в base64 для Telegram
+    const buffer = Buffer.from(arrayBuffer)
     const base64Image = buffer.toString('base64')
+    console.log(
+      '📸 Изображение преобразовано в base64, длина:',
+      base64Image.length,
+      'символов'
+    )
+
     return `image/jpeg;base64,${base64Image}`
   } catch (error: any) {
-    console.error('🔴 Ошибка генерации фото через FAL Router:', error.message)
+    console.error('🔴 Критическая ошибка при генерации фото:', error.message)
+    console.error('🐞 Стек ошибки:', error.stack)
     return ''
   }
 }
