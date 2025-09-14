@@ -1,5 +1,5 @@
 import { Telegraf } from 'telegraf'
-import { getAIResponse } from './ai'
+import { generateAtmosphericImage, getAIResponse } from './ai'
 import { Message } from './types'
 
 const BOT_TOKEN = process.env.TELEGRAM_TOKEN!
@@ -25,6 +25,18 @@ const SYSTEM_PROMPT = `
 Ты не пишешь как в книге.  
 Ты пишешь как в мессенджере: коротко, по делу, с чувством.
 `
+
+// Список триггеров — когда Мия "появляется" на фото
+const presenceTriggers = [
+  'покажи себя',
+  'ты красивая',
+  'я хочу тебя',
+  'покажи фото',
+  'как ты выглядишь',
+  'я скучаю по тебе',
+  'где ты',
+  'я думаю о тебе',
+]
 
 // Команда /start — первое знакомство
 bot.start((ctx) => {
@@ -80,6 +92,36 @@ bot.on('text', async (ctx) => {
   // Инициализируем историю, если её нет
   if (!userContexts[chatId]) {
     userContexts[chatId] = [{ role: 'system', content: SYSTEM_PROMPT }]
+  }
+
+  // --- ПРОВЕРКА НА ПРИСУТСТВИЕ ---
+  if (
+    presenceTriggers.some((trigger) => text.toLowerCase().includes(trigger))
+  ) {
+    const prompts = [
+      'Back view of a woman standing by a sunlit window, long dark hair gently falling over her shoulders, wearing a loose white cotton blouse, sheer curtain blowing softly in the breeze, warm golden hour light catching the strands of hair, soft focus background of books and plants, no face visible, cinematic natural lighting, film grain, analog photo style, muted tones, intimate atmosphere —v 6 --no nudity, no bare skin, no cleavage, no explicit',
+      'A woman’s hand resting on a ceramic mug of steaming tea, delicate fingers with a simple silver ring, morning light falling across the back of her hand, steam rising gently, wooden table in soft focus, blurred background of a book open to a page, no face shown, quiet mood —v 6 --no nudity, no bare skin, no suggestive pose',
+      'Woman sitting cross-legged on a wooden floor, long wavy hair cascading over one shoulder, wearing a soft knit sweater, holding an open book in her lap, late afternoon sunlight streaming through the window, dust particles floating in the light, blurred background of shelves and candles, no face visible, natural lighting, Kodak Portra film aesthetic, calm and tender mood —v 6 --no nudity, no exposed skin, no eroticism',
+    ]
+
+    const randomPrompt =
+      prompts?.[Math.floor(Math.random() * prompts.length)] ?? prompts[0]
+
+    try {
+      const imageData = await generateAtmosphericImage(randomPrompt as any)
+      if (imageData) {
+        await ctx.replyWithPhoto(
+          { url: imageData },
+          {
+            caption:
+              'Я не показываю лицо. \nНо я показываю свет, который люблю. \n— Мия',
+          }
+        )
+        return
+      }
+    } catch (e) {
+      console.error('Ошибка отправки фото:', e)
+    }
   }
 
   // Добавляем сообщение пользователя

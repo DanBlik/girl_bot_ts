@@ -9,6 +9,44 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
 const OPENROUTER_API_MODEL_NAME = process.env.OPENROUTER_API_MODEL_NAME
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
+const HF_API_KEY = process.env.HF_API_KEY
+const HF_URL =
+  'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3-medium'
+
+export async function generateAtmosphericImage(
+  prompt: string
+): Promise<string> {
+  if (!HF_API_KEY) {
+    console.error('❌ HF_API_KEY не установлен!')
+    return ''
+  }
+
+  try {
+    const response = await axios.post(
+      HF_URL,
+      { inputs: prompt },
+      {
+        headers: {
+          Authorization: `Bearer ${HF_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        responseType: 'arraybuffer',
+        timeout: 15000,
+      }
+    )
+
+    // Преобразуем в base64 для Telegram
+    const imageBase64 = Buffer.from(response.data).toString('base64')
+    return `data:image/jpeg;base64,${imageBase64}`
+  } catch (error: any) {
+    console.error(
+      '🔴 Ошибка генерации фото:',
+      error.response?.data || error.message
+    )
+    return ''
+  }
+}
+
 export async function getAIResponse(messages: Message[]): Promise<string> {
   if (!OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY не установлен!')
