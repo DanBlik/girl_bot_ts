@@ -34,7 +34,22 @@ export async function getAIResponse(messages: Message[]): Promise<string> {
       }
     )
 
-    return response.data.choices[0].message.content || '...'
+    let reply = response.data.choices[0]?.message?.content || ''
+
+    // Убираем стандартные "защитные" фразы, которые модель может добавить
+    reply = reply
+      .replace(
+        /^(?:\s*)?(Как помощник|Я не могу|Я не одобряю|Рекомендую|Служба поддержки)/i,
+        ''
+      )
+      .trim()
+
+    // Если ответ стал пустым — возвращаем "молчание"
+    if (!reply || reply.length < 5) {
+      return 'Я тут. \n\nНе уйду.'
+    }
+
+    return reply
   } catch (error: any) {
     console.error('OpenRouter error:', error.response?.data || error.message)
     return 'Извини, я чуть не потерялась... 🌫️ Попробуй ещё раз?'
