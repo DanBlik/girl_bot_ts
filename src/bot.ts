@@ -1,3 +1,5 @@
+import 'dotenv/config'
+
 import { Telegraf } from 'telegraf'
 import { generateAtmosphericImage, getAIResponse } from './ai'
 import { Message } from './types'
@@ -108,17 +110,17 @@ bot.on('text', async (ctx) => {
       prompts?.[Math.floor(Math.random() * prompts.length)] ?? prompts[0]
 
     try {
-      const imageData = await generateAtmosphericImage(randomPrompt as any)
-      if (imageData) {
-        await ctx.replyWithPhoto(
-          { url: imageData },
-          {
-            caption:
-              'Я не показываю лицо. \nНо я показываю свет, который люблю. \n— Мия',
-          }
-        )
-        return
-      }
+      const imageBuffer = await generateAtmosphericImage(randomPrompt as any)
+    if (imageBuffer) {
+      await ctx.replyWithPhoto(
+        { source: imageBuffer }, // ← передаём Buffer, а не URL
+        {
+          caption:
+            'Я не показываю лицо. \nНо я показываю свет, который люблю. \n— Мия',
+        }
+      )
+      return
+    }
     } catch (e) {
       console.error('Ошибка отправки фото:', e)
     }

@@ -1,5 +1,5 @@
+import 'dotenv/config'
 import axios from 'axios'
-import { InferenceClient } from '@huggingface/inference'
 
 interface Message {
   role: 'system' | 'user' | 'assistant'
@@ -10,78 +10,40 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
 const OPENROUTER_API_MODEL_NAME = process.env.OPENROUTER_API_MODEL_NAME
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
-const HF_TOKEN = process.env.HF_API_KEY
-
+// Функция для скачивания изображения и преобразования в base64
 export async function generateAtmosphericImage(
-  prompt: string
-): Promise<string> {
-  console.log('🔍 Генерация фото запущена...')
-  console.log('📝 Промпт:', prompt)
-
-  if (!HF_TOKEN) {
-    console.error('❌ HF_TOKEN не установлен!')
-    return ''
-  }
-
-  console.log('✅ HF_TOKEN найден')
-
+  prompt: string,
+  width = 1024,
+  height = 1024,
+  seed = Math.floor(Math.random() * 1000000),
+  model = 'flux'
+): Promise<Buffer | null> {
   try {
-    console.log('📡 Отправка запроса на FAL Router...')
+    // ✅ ВАЖНО: НЕТ ПРОБЕЛОВ!
+    //@prettier-ignore
+    const url = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=${model}`
+    console.log('📡 Запрос к Pollinations:', url)
 
-    const response = await fetch(
-      'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${HF_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sync_mode: true,
-          prompt: prompt,
-          num_inference_steps: 40,
-          guidance_scale: 7.5,
-          negative_prompt:
-            'nudity, explicit, bare skin, cleavage, sexual content, text, watermark, logo, cartoon, anime, deformed, low quality, blurry, bad anatomy',
-          width: 1024,
-          height: 1024,
-          seed: Math.floor(Math.random() * 1000000),
-        }),
-      }
-    )
-
-    console.log('📡 Получен ответ:', response.status, response.statusText)
+    const response = await fetch(url)
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('🔴 Ошибка от FAL Router:', response.status, errorText)
-      return ''
+      console.error(
+        '🔴 Ошибка от Pollinations:',
+        response.status,
+        response.statusText
+      )
+      return null
     }
 
-    console.log('📥 Получаем данные как ArrayBuffer...')
-    const arrayBuffer = await response.arrayBuffer()
-    console.log(
-      '✅ ArrayBuffer получен, размер:',
-      arrayBuffer.byteLength,
-      'байт'
-    )
+   const buffer = await response.arrayBuffer()
+    console.log('📸 Изображение получено, размер:', buffer.byteLength, 'байт')
 
-    const buffer = Buffer.from(arrayBuffer)
-    const base64Image = buffer.toString('base64')
-    console.log(
-      '📸 Изображение преобразовано в base64, длина:',
-      base64Image.length,
-      'символов'
-    )
-
-    return `image/jpeg;base64,${base64Image}`
+    return Buffer.from(buffer)
   } catch (error: any) {
-    console.error('🔴 Критическая ошибка при генерации фото:', error.message)
-    console.error('🐞 Стек ошибки:', error.stack)
-    return ''
+    console.error('🔴 Ошибка при генерации изображения:', error.message)
+    return null
   }
 }
-
 export async function getAIResponse(messages: Message[]): Promise<string> {
   if (!OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY не установлен!')
