@@ -17,9 +17,7 @@ export async function getAIResponse(messages: Message[]): Promise<string> {
     const response = await axios.post(
       OPENROUTER_URL,
       {
-        //
-        // model: 'deepseek-ai/deepseek-chat', // ← ВАЖНО: именно так пишется имя модели!
-        model: 'deepseek/deepseek-chat-v3.1:free',
+        model: 'deepseek/deepseek-chat-v3.1:free', // ← ВАЖНО: именно так пишется имя модели!
         messages,
         temperature: 0.8,
         max_tokens: 500,
@@ -27,7 +25,7 @@ export async function getAIResponse(messages: Message[]): Promise<string> {
       {
         headers: {
           Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          'HTTP-Referer': 'girlbotts-production.up.railway.app', // обязательно, даже если просто тест
+          'HTTP-Referer': 'girlbotts-production.up.railway.app', // обязательно
           'X-Title': 'GirlFriendBot',
           'Content-Type': 'application/json',
         },
